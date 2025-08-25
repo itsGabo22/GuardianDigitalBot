@@ -1,67 +1,101 @@
-# WhatsApp AI Chatbot
+# GuardianDigitalBot
 
-This project is a WhatsApp chatbot designed to detect scams, fake news, and potential viruses through the use of external APIs. It also collects user feedback to assess its effectiveness.
+Bot de WhatsApp con análisis de mensajes usando OpenAI y Google Safe Browsing.
 
-## Features
+## Características
 
-- **Scam Detection**: Analyzes incoming messages to identify potential scams using external APIs.
-- **Fake News Detection**: Checks the validity of information to prevent the spread of misinformation.
-- **Virus Detection**: Scans messages for potential virus links or harmful content.
-- **User Feedback Collection**: Gathers user feedback to improve the chatbot's performance and effectiveness.
+- Analiza mensajes en busca de estafas, noticias falsas y enlaces peligrosos.
+- Guarda interacciones y feedback en PostgreSQL.
+- Integración con WhatsApp vía Twilio Sandbox (pruebas) o BuilderBot (producción).
 
-## Project Structure
+## Instalación
 
-```
-whatsapp-ai-chatbot
-├── src
-│   ├── index.ts               # Entry point of the application
-│   ├── bot
-│   │   └── messageHandler.ts   # Handles incoming messages and responses
-│   ├── services
-│   │   ├── analysisService.ts   # Analyzes messages for scams and misinformation
-│   │   └── feedbackService.ts    # Collects and stores user feedback
-│   ├── database
-│   │   ├── client.ts            # Manages database connection
-│   │   └── schema.sql           # SQL schema for PostgreSQL database
-│   └── config.ts                # Configuration constants
-├── package.json                 # npm configuration file
-├── tsconfig.json                # TypeScript configuration file
-└── README.md                    # Project documentation
-```
+1. Clona el repositorio:
 
-## Setup Instructions
-
-1. **Clone the repository**:
-   ```
-   git clone <repository-url>
-   cd whatsapp-ai-chatbot
+   ```bash
+   git clone https://github.com/itsGabo22/GuardianDigitalBot.git
+   cd GuardianDigitalBot
    ```
 
-2. **Install dependencies**:
-   ```
+2. Instala dependencias:
+
+   ```bash
    npm install
    ```
 
-3. **Set up the PostgreSQL database**:
-   - Create a PostgreSQL database and run the `schema.sql` file to set up the necessary tables.
+3. Configura el archivo `.env` con tus claves y credenciales.
 
-4. **Configure environment variables**:
-   - Update the `config.ts` file with your API keys and database connection strings.
+4. Compila el proyecto:
 
-5. **Run the application**:
-   ```
-   npm start
+   ```bash
+   npx tsc
    ```
 
-## Usage
+5. Inicia el servidor:
+   ```bash
+   node dist/index.js
+   ```
 
-- Once the chatbot is running, it will listen for incoming messages on WhatsApp.
-- Users can interact with the chatbot by sending messages, and it will respond with relevant information regarding scams, fake news, or potential viruses.
+## Uso
 
-## Feedback
+- Para pruebas, usa Twilio Sandbox y ngrok para exponer el webhook.
+- Para producción, usa BuilderBot y un número de WhatsApp Business.
 
-At the end of each interaction, users will be prompted to provide feedback on whether the chatbot helped resolve their issue. This feedback will be stored in the database for future analysis.
+## Contribuir
 
-## License
+1. Haz un fork del repositorio.
+2. Crea una rama nueva.
+3. Haz tus cambios y crea un pull request.
 
-This project is licensed under the MIT License.
+---
+
+¿Quieres agregar instrucciones específicas para tus compañeros o detalles técnicos?# GuardianDigitalBot
+
+Bot de WhatsApp con análisis de mensajes usando OpenAI y Google Safe Browsing.
+
+## Características
+
+- Analiza mensajes en busca de estafas, noticias falsas y enlaces peligrosos.
+- Guarda interacciones y feedback en PostgreSQL.
+- Integración con WhatsApp vía Twilio Sandbox (pruebas) o BuilderBot (producción).
+
+## Instalación
+
+1. Clona el repositorio:
+
+   ```bash
+   git clone https://github.com/itsGabo22/GuardianDigitalBot.git
+   cd GuardianDigitalBot
+   ```
+
+2. Instala dependencias:
+
+   ```bash
+   npm install
+   ```
+
+3. Configura el archivo `.env` con tus claves y credenciales.
+
+4. Compila el proyecto:
+
+   ```bash
+   npx tsc
+   ```
+
+5. Inicia el servidor:
+   ```bash
+   node dist/index.js
+   ```
+
+## Uso
+
+- Para pruebas, usa Twilio Sandbox y ngrok para exponer el webhook.
+- Para producción, usa BuilderBot y un número de WhatsApp Business.
+
+## Contribuir
+
+1. Haz un fork del repositorio.
+2. Crea una rama nueva.
+3. Haz tus cambios y crea un pull request.
+
+---

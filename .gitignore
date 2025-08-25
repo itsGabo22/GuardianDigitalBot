@@ -1,2 +1,7 @@
 .env
-node_modules
+node_modules/
+schema.sql
+SELECT id,.sql
+*.log
+.DS_Store
+Thumbs.db
