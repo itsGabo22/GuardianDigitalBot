@@ -9,6 +9,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "@builderbot/bot": "^1.2.9",
     "axios": "^0.21.4",
     "body-parser": "^2.2.0",
     "dotenv": "^17.2.1",
@@ -16,6 +17,7 @@
     "google-auth-library": "^10.2.1",
     "openai": "^5.15.0",
     "pg": "^8.16.3",
+    "twilio": "^5.8.0",
     "whatsapp-web.js": "^1.15.0"
   },
   "devDependencies": {

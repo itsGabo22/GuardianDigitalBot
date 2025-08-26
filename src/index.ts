@@ -8,6 +8,9 @@ import { DatabaseClient } from './database/client';
 import { config } from './config';
 import { AnalysisService } from './services/analysisService';
 import { FeedbackService } from './services/feedbackService';
+import { IntentService } from './services/intentService';
+import { NotificationService } from './services/notificationService';
+import { TranscriptionService } from './services/TranscriptionService';
 
 const app = express();
 const port = config.server.port;
@@ -19,15 +22,19 @@ app.use(bodyParser.json());
 // --- Inyección de Dependencias ---
 const databaseClient = new DatabaseClient();
 const analysisService = new AnalysisService();
+const intentService = new IntentService();
+const transcriptionService = new TranscriptionService();
+const notificationService = new NotificationService();
 const feedbackService = new FeedbackService(databaseClient);
-const messageHandler = new MessageHandler(analysisService, feedbackService);
+const messageHandler = new MessageHandler(analysisService, feedbackService, intentService, notificationService, transcriptionService);
 
 // Endpoint para recibir los mensajes de WhatsApp
 app.post('/webhook', async (req, res) => {
     try {
         const incomingMessage = {
             from: req.body.From,
-            body: req.body.Body
+            body: req.body.Body, // Texto del mensaje
+            mediaUrl: req.body.MediaUrl0 // URL del archivo multimedia (si existe)
         };
         const response = await messageHandler.handleIncomingMessage(incomingMessage);
         // Envía la respuesta como texto plano para WhatsApp

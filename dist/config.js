@@ -4,7 +4,14 @@ exports.config = void 0;
 exports.config = {
     apiKeys: {
         openAI: process.env.OPENAI_API_KEY || '',
-        google: process.env.GOOGLE_API_KEY || ''
+        google: process.env.GOOGLE_API_KEY || '',
+        virusTotal: process.env.VIRUSTOTAL_API_KEY || '',
+        googleSearchEngineId: process.env.GOOGLE_SEARCH_ENGINE_ID || '',
+    },
+    twilio: {
+        accountSid: process.env.TWILIO_ACCOUNT_SID || '',
+        authToken: process.env.TWILIO_AUTH_TOKEN || '',
+        phoneNumber: process.env.TWILIO_PHONE_NUMBER || '',
     },
     database: {
         host: process.env.DB_HOST || 'localhost',

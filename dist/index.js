@@ -12,6 +12,9 @@ const client_1 = require("./database/client");
 const config_1 = require("./config");
 const analysisService_1 = require("./services/analysisService");
 const feedbackService_1 = require("./services/feedbackService");
+const intentService_1 = require("./services/intentService");
+const notificationService_1 = require("./services/notificationService");
+const TranscriptionService_1 = require("./services/TranscriptionService");
 const app = (0, express_1.default)();
 const port = config_1.config.server.port;
 // Agrega el middleware para datos urlencoded ANTES del JSON
@@ -20,14 +23,18 @@ app.use(body_parser_1.default.json());
 // --- Inyección de Dependencias ---
 const databaseClient = new client_1.DatabaseClient();
 const analysisService = new analysisService_1.AnalysisService();
+const intentService = new intentService_1.IntentService();
+const transcriptionService = new TranscriptionService_1.TranscriptionService();
+const notificationService = new notificationService_1.NotificationService();
 const feedbackService = new feedbackService_1.FeedbackService(databaseClient);
-const messageHandler = new messageHandler_1.MessageHandler(analysisService, feedbackService);
+const messageHandler = new messageHandler_1.MessageHandler(analysisService, feedbackService, intentService, notificationService, transcriptionService);
 // Endpoint para recibir los mensajes de WhatsApp
 app.post('/webhook', async (req, res) => {
     try {
         const incomingMessage = {
             from: req.body.From,
-            body: req.body.Body
+            body: req.body.Body,
+            mediaUrl: req.body.MediaUrl0 // URL del archivo multimedia (si existe)
         };
         const response = await messageHandler.handleIncomingMessage(incomingMessage);
         // Envía la respuesta como texto plano para WhatsApp
