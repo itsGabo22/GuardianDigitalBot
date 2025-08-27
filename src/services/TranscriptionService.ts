@@ -1,51 +1,37 @@
 import OpenAI from 'openai';
-import axios from 'axios';
-import { config } from '../config';
 import { toFile } from 'openai/uploads';
+import { config } from '../config';
 
 export class TranscriptionService {
     private openai: OpenAI;
-    private twilioAccountSid: string;
-    private twilioAuthToken: string;
 
     constructor() {
         this.openai = new OpenAI({ apiKey: config.apiKeys.openAI });
-        this.twilioAccountSid = config.twilio.accountSid;
-        this.twilioAuthToken = config.twilio.authToken;
     }
 
-    public async transcribeAudio(audioUrl: string): Promise<string> {
+    public async transcribeAudio(audioBuffer: Buffer): Promise<string> {
+        console.log('[TranscriptionService] Starting audio transcription...');
         try {
-            // 1. Descargar el audio desde la URL de Twilio con autenticación.
-            // Las URLs de medios de Twilio requieren autenticación.
-            const response = await axios.get(audioUrl, {
-                responseType: 'arraybuffer',
-                auth: {
-                    username: this.twilioAccountSid,
-                    password: this.twilioAuthToken
-                }
-            });
-            const audioBuffer = Buffer.from(response.data);
+            // 1. Usar el helper 'toFile' para preparar el buffer para la API.
+            // Es más robusto especificar el tipo MIME directamente.
+            console.log('[TranscriptionService] Preparing audio buffer for OpenAI API...');
+            const audioFile = await toFile(audioBuffer, 'audio.ogg', { type: 'audio/ogg' });
+            console.log('[TranscriptionService] Audio buffer prepared successfully.');
 
-            // 2. Convertir el buffer a un formato que la API de OpenAI entienda.
-            const audioFile = await toFile(audioBuffer, 'audio.ogg');
-
-            // 3. Enviar el audio a OpenAI Whisper para transcribirlo.
+            // 2. Enviar el archivo a OpenAI para su transcripción
+            console.log('[TranscriptionService] Sending audio to Whisper API...');
             const transcription = await this.openai.audio.transcriptions.create({
                 file: audioFile,
-                model: "whisper-1",
-                response_format: "text"
+                model: 'whisper-1',
             });
+            console.log(`[TranscriptionService] Transcription received successfully: "${transcription.text}"`);
 
-            // 4. Devolver el texto transcrito.
-            return transcription || "La transcripción no generó texto.";
-        } catch (error: any) {
-            console.error("Error transcribiendo audio:", error);
-            if (axios.isAxiosError(error)) {
-                // Loguear detalles específicos si es un error de Axios (como el 401 que vimos).
-                console.error("Detalles del error de Axios:", error.response?.status, error.response?.data?.toString());
-            }
-            return "Error: No se pudo transcribir el audio.";
+            return transcription.text;
+        } catch (error) {
+            // Logueamos el error completo para tener más detalles en la consola.
+            console.error(`[TranscriptionService] CRITICAL: Failed to process audio buffer.`, error);
+            // Lanzamos un error personalizado para que el MessageHandler lo pueda atrapar y notificar al usuario.
+            throw new Error('No se pudo procesar el archivo de audio. Es posible que el formato no sea compatible o haya un problema con el servicio.');
         }
     }
 }

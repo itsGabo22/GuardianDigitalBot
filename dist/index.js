@@ -5,58 +5,46 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
-const express_1 = __importDefault(require("express"));
-const body_parser_1 = __importDefault(require("body-parser"));
+const bot_1 = require("@builderbot/bot");
+const provider_baileys_1 = require("@builderbot/provider-baileys");
 const messageHandler_1 = require("./bot/messageHandler");
 const client_1 = require("./database/client");
-const config_1 = require("./config");
 const analysisService_1 = require("./services/analysisService");
 const feedbackService_1 = require("./services/feedbackService");
 const intentService_1 = require("./services/intentService");
-const notificationService_1 = require("./services/notificationService");
 const TranscriptionService_1 = require("./services/TranscriptionService");
-const app = (0, express_1.default)();
-const port = config_1.config.server.port;
-// Agrega el middleware para datos urlencoded ANTES del JSON
-app.use(body_parser_1.default.urlencoded({ extended: false }));
-app.use(body_parser_1.default.json());
-// --- Inyección de Dependencias ---
-const databaseClient = new client_1.DatabaseClient();
-const analysisService = new analysisService_1.AnalysisService();
-const intentService = new intentService_1.IntentService();
-const transcriptionService = new TranscriptionService_1.TranscriptionService();
-const notificationService = new notificationService_1.NotificationService();
-const feedbackService = new feedbackService_1.FeedbackService(databaseClient);
-const messageHandler = new messageHandler_1.MessageHandler(analysisService, feedbackService, intentService, notificationService, transcriptionService);
-// Endpoint para recibir los mensajes de WhatsApp
-app.post('/webhook', async (req, res) => {
-    try {
+const main = async () => {
+    // --- Inyección de Dependencias ---
+    const databaseClient = new client_1.DatabaseClient();
+    const analysisService = new analysisService_1.AnalysisService();
+    const intentService = new intentService_1.IntentService();
+    const transcriptionService = new TranscriptionService_1.TranscriptionService();
+    const feedbackService = new feedbackService_1.FeedbackService(databaseClient);
+    // El flujo principal que captura todos los mensajes
+    const mainFlow = (0, bot_1.addKeyword)('__capture_all__')
+        .addAction(async (ctx, { provider }) => {
+        // Inicializamos el MessageHandler aquí para tener acceso al provider
+        const messageHandler = new messageHandler_1.MessageHandler(analysisService, feedbackService, intentService, transcriptionService, provider // Pasamos el proveedor de BuilderBot
+        );
+        // Adaptamos el mensaje de BuilderBot a nuestra interfaz
         const incomingMessage = {
-            from: req.body.From,
-            body: req.body.Body,
-            mediaUrl: req.body.MediaUrl0 // URL del archivo multimedia (si existe)
+            from: ctx.from,
+            body: ctx.body,
+            mediaUrl: ctx.media?.url // BuilderBot puede tener la URL del medio aquí
         };
-        const response = await messageHandler.handleIncomingMessage(incomingMessage);
-        // Envía la respuesta como texto plano para WhatsApp
-        res.set('Content-Type', 'text/plain');
-        res.send(response);
-    }
-    catch (error) {
-        console.error('Error handling webhook:', error);
-        res.status(500).send('Error interno');
-    }
-});
-const startServer = async () => {
+        await messageHandler.handleIncomingMessage(incomingMessage);
+    });
+    const adapterFlow = (0, bot_1.createFlow)([mainFlow]);
+    const adapterProvider = (0, bot_1.createProvider)(provider_baileys_1.BaileysProvider);
+    (0, bot_1.createBot)({ flow: adapterFlow, provider: adapterProvider, database: undefined });
     try {
         await databaseClient.connect();
         console.log('Connected to the database successfully.');
-        app.listen(port, () => {
-            console.log(`WhatsApp AI Chatbot is running on port ${port}`);
-        });
+        console.log('GuardianDigitalBot está listo. Escanea el código QR con tu WhatsApp.');
     }
     catch (err) {
         console.error('Failed to connect to the database. Application not started.', err);
         process.exit(1);
     }
 };
-startServer();
+main();

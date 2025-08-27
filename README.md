@@ -9,7 +9,7 @@ Bot de WhatsApp con análisis de mensajes usando OpenAI, Google Safe Browsing y 
 - **Verificación de Enlaces:** Usa VirusTotal para escanear URLs en busca de malware.
 - **Inteligencia Artificial:** Utiliza OpenAI (GPT) para determinar la intención y analizar el contenido.
 - **Persistencia de Datos:** Guarda interacciones y feedback en una base de datos PostgreSQL.
-- **Plataforma Flexible:** Diseñado para funcionar con Twilio (para pruebas) y preparado para migrar a BuilderBot (para producción).
+- **Conexión Directa:** Usa BuilderBot para conectar directamente con WhatsApp.
 
 ## 🚀 Puesta en Marcha
 
@@ -19,7 +19,6 @@ Sigue estos pasos para tener el bot funcionando en tu entorno local.
 
 - [Node.js](https://nodejs.org/) (v18 o superior)
 - [PostgreSQL](https://www.postgresql.org/download/)
-- Una cuenta de [Twilio](https://www.twilio.com/) con el Sandbox de WhatsApp activado.
 - Claves de API para:
   - [OpenAI](https://platform.openai.com/api-keys)
   - [Google Cloud](https://console.cloud.google.com/) (para Safe Browsing y Custom Search)
@@ -85,29 +84,17 @@ Este es el paso más importante para que el bot funcione correctamente.
     ```
 
 2.  **Inicia el servidor:**
+
     ```bash
     npm run dev
     ```
-    Si todo está bien, verás el mensaje: `WhatsApp AI Chatbot is running on port 3000`.
 
-## 🌐 Uso con Twilio (Entorno de Pruebas)
+    Si todo está bien, verás un mensaje de que el bot está listo y, a continuación, el código QR.
 
-Para que Twilio pueda comunicarse con tu servidor local, necesitas exponerlo a internet.
+3.  **Escanea el Código QR:**
+    - Abre WhatsApp en tu teléfono, ve a `Configuración > Dispositivos vinculados` y escanea el código que aparece en la terminal.
 
-1.  **Inicia ngrok:**
-    En una **nueva terminal**, ejecuta:
-
-    ```bash
-    ngrok http 3000
-    ```
-
-2.  **Configura el Webhook:**
-    - Copia la URL `https://...ngrok-free.app` que te da ngrok.
-    - Ve a tu Consola de Twilio > WhatsApp Sandbox Settings.
-    - En el campo "WHEN A MESSAGE COMES IN", pega la URL de ngrok y añade `/webhook` al final. Ejemplo: `https://tunnombredengrok.ngrok-free.app/webhook`.
-    - Asegúrate de que el método sea `HTTP POST` y guarda.
-
-¡Ahora puedes enviar mensajes a tu número de Sandbox y el bot te responderá!
+¡Listo! El bot estará conectado a tu número y respondiendo a los mensajes.
 
 ## 🤝 Contribuir
 

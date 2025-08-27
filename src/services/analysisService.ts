@@ -64,7 +64,7 @@ export class AnalysisService {
                 params: {
                     key: this.googleApiKey,
                     cx: this.googleSearchEngineId,
-                    q: `${query} es real o falso`, // Añadimos contexto a la búsqueda
+                    q: query, // Usamos la consulta directa para resultados más naturales
                 },
             });
 
@@ -90,27 +90,44 @@ export class AnalysisService {
             const factCheckContext = await this.getFactCheckInfo(message);
 
             const prompt = `
-                Actúa como un experto en ciberseguridad y un meticuloso verificador de hechos (fact-checker). Tu tarea es analizar el siguiente mensaje.
+                You are a specialized AI assistant for cybersecurity analysis. Your task is to analyze a user's message based on a strict set of rules and return a single JSON object.
 
-                **Contexto de Búsqueda Web:**
-                ${factCheckContext}
+                **Step 1: Scam Analysis (Highest Priority)**
+                First, analyze the "User Message" for any signs of a scam. IGNORE the "Search Results" for this step.
+                Scam indicators include:
+                - Asking for personal/financial information (passwords, credit card numbers, CVV).
+                - Urgent requests or threats.
+                - Unbelievable offers or prizes.
+                - Suspicious links.
+                - Poor grammar and spelling.
 
-                **Mensaje del Usuario a Analizar:**
+                If you identify a clear scam, your JSON output MUST be:
+                \`{"isScam": true, "isFakeNews": false, "reason": "Explain here in Spanish why it is a scam."}\`
+                DO NOT proceed to Step 2.
+
+                **Step 2: Fake News Analysis (Only if NOT a scam)**
+                If and ONLY IF the message is NOT a scam, analyze it as a potential news item. Use the "Search Results" provided to determine its veracity.
+                - If search results CONTRADICT the message, it is FAKE NEWS.
+                - If search results CONFIRM the message, it is TRUE.
+                - If search results are inconclusive or absent, it is NOT VERIFIABLE.
+
+                Based on this, generate the JSON output in Spanish:
+                - For FAKE NEWS: \`{"isScam": false, "isFakeNews": true, "reason": "Explain why it's false based on the search results."}\`
+                - For TRUE news: \`{"isScam": false, "isFakeNews": false, "reason": "Explain that the information is confirmed by search results."}\`
+                - For NOT VERIFIABLE news: \`{"isScam": false, "isFakeNews": false, "reason": "Explain that the information could not be verified with the provided search results."}\`
+                - For a simple message (like "hello"): \`{"isScam": false, "isFakeNews": false, "reason": "The message appears to be a safe, personal communication."}\`
+
+                ---
+                **User Message:**
                 "${message}"
 
-                **Instrucciones:**
-                1.  **Análisis de Estafa (Scam):** Evalúa el mensaje del usuario en busca de indicadores de estafa (phishing, ofertas irreales, etc.).
-                2.  **Análisis de Noticia Falsa (Fake News):** Usando el **Contexto de Búsqueda Web** proporcionado, determina si el mensaje del usuario contiene desinformación. Si el contexto contradice el mensaje, es probable que sea una noticia falsa.
-                3.  **Razonamiento:** En "analysisSteps", razona paso a paso tus conclusiones para estafa y noticia falsa por separado.
-                4.  **Veredicto Final:** Proporciona tu veredicto en un formato JSON estricto. La "reason" debe ser una explicación clara y unificada para el usuario final en español. Si la evidencia es clara, da una respuesta directa y segura. Si no hay peligro, indícalo.
+                **Search Results:**
+                """
+                ${factCheckContext}
+                """
+                ---
 
-                **Formato de Respuesta (JSON estricto únicamente):**
-                {
-                    "analysisSteps": "Aquí tu razonamiento paso a paso.",
-                    "isScam": boolean,
-                    "isFakeNews": boolean,
-                    "reason": "Explicación unificada y clara para el usuario final en español."
-                }
+                Your response MUST be ONLY the JSON object.
             `;
 
             const completion = await this.openai.chat.completions.create({
