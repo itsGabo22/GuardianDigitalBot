@@ -1,5 +1,6 @@
 import { AnalysisService, AnalysisResult } from '../services/analysisService';
 import { FeedbackService } from '../services/feedbackService';
+import { config } from '../config'; // Importamos la configuración
 import { BaileysProvider } from '@builderbot/provider-baileys';
 import { IntentService } from '../services/intentService';
 import { TranscriptionService } from '../services/TranscriptionService';
@@ -112,10 +113,12 @@ export class MessageHandler {
             await this.provider.sendText(userId, response);
 
             // 2. (NUEVO) Enviamos el mensaje opcional con el formulario
-            const formMessage = "Por cierto, como parte de la hackatón, estamos recopilando información sobre ciberseguridad. ¿Te gustaría llenar una breve encuesta (opcional)?\n\nhttps://sensibilizacion.ciberpaz.gov.co/#/data-ciberpaz/response/116?type=public";
-            // Añadimos un pequeño retraso para que no se sienta como spam
-            await new Promise(resolve => setTimeout(resolve, 1500)); // 1.5 segundos de retraso
-            await this.provider.sendText(userId, formMessage);
+            if (config.app.surveyUrl) {
+                const formMessage = `Por cierto, como parte de la hackatón, estamos recopilando información sobre ciberseguridad. ¿Te gustaría llenar una breve encuesta (opcional)?\n\n${config.app.surveyUrl}`;
+                // Añadimos un pequeño retraso para que no se sienta como spam
+                await new Promise(resolve => setTimeout(resolve, 1500)); // 1.5 segundos de retraso
+                await this.provider.sendText(userId, formMessage);
+            }
         } else {
             await this.provider.sendText(userId, "No tengo claro a qué te refieres. Si quieres analizar un nuevo mensaje, simplemente envíamelo.");
         }

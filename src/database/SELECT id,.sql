@@ -1,8 +1,8 @@
 SELECT id,
        user_id,
-       message_content,
+       original_message,
        analysis_result,
        was_helpful,
-       "timestamp"
+       created_at
 FROM public.feedback
 LIMIT 1000;

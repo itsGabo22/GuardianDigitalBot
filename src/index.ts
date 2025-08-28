@@ -1,6 +1,14 @@
+//__author__ = "Guardian Digital"
+//__license__ = "GPL"
+//__version__ = "1.0.0"
+//__email__ = "guardiandigitalpy@gmail.com"
+
 import dotenv from 'dotenv';
-dotenv.config();
 import { createBot, createProvider, createFlow, addKeyword, EVENTS } from '@builderbot/bot';
+// Cargar variables de entorno solo en desarrollo. En producción (Render), se establecen en el dashboard.
+if (process.env.NODE_ENV !== 'production') {
+    dotenv.config();
+}
 import { BaileysProvider } from '@builderbot/provider-baileys';
 import { JsonFileDB as JsonDB } from '@builderbot/database-json';
 import fs from 'fs';
@@ -15,6 +23,30 @@ import { IntentService } from './services/intentService';
 import { config } from './config';
 import { TranscriptionService } from './services/TranscriptionService';
 import { installConsoleFilter } from '@leifermendez/baileys/lib/Utils/console-filter';
+
+const MAX_DB_RETRIES = 5;
+const DB_RETRY_DELAY_MS = 5000; // 5 segundos
+
+/**
+ * Intenta conectar a la base de datos con una lógica de reintentos.
+ * @param client El cliente de la base de datos.
+ */
+const connectWithRetry = async (client: DatabaseClient): Promise<void> => {
+    for (let attempt = 1; attempt <= MAX_DB_RETRIES; attempt++) {
+        try {
+            await client.connect();
+            console.log('Connected to the database successfully.');
+            return; // Conexión exitosa, salimos de la función
+        } catch (err) {
+            console.error(`[DB Connection] Attempt ${attempt} failed:`, err);
+            if (attempt < MAX_DB_RETRIES) {
+                console.log(`[DB Connection] Retrying in ${DB_RETRY_DELAY_MS / 1000} seconds...`);
+                await new Promise(resolve => setTimeout(resolve, DB_RETRY_DELAY_MS));
+            }
+        }
+    }
+    throw new Error('Failed to connect to the database after multiple retries.');
+};
 
 const main = async () => {
     // --- PASO DE DEPURACIÓN PARA RENDER ---
@@ -116,8 +148,8 @@ const main = async () => {
     const adapterDB = new JsonDB();
 
     try {
-        await databaseClient.connect();
-        console.log('Connected to the database successfully.');
+        // Usamos nuestra nueva función con lógica de reintentos
+        await connectWithRetry(databaseClient);
 
         const bot = await createBot({
             flow: adapterFlow,
