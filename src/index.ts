@@ -61,7 +61,7 @@ const main = async () => {
                     // Usamos la función de Baileys para descargar y desencriptar el audio.
                     // Esto es crucial porque los audios de WhatsApp vienen encriptados.
                     const buffer = await downloadMediaMessage(
-                        ctx as unknown as WAMessage, // Forzamos la conversión de tipos para que sea compatible con Baileys
+                        ctx.message as WAMessage, // El objeto de mensaje completo de Baileys
                         'buffer',
                         {},
                         {
