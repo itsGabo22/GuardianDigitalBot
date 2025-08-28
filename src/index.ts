@@ -3,6 +3,8 @@ dotenv.config();
 import { createBot, createProvider, createFlow, addKeyword, EVENTS } from '@builderbot/bot';
 import { BaileysProvider } from '@builderbot/provider-baileys';
 import { JsonFileDB as JsonDB } from '@builderbot/database-json';
+import fs from 'fs';
+import path from 'path';
 import { downloadMediaMessage, WAMessage } from '@whiskeysockets/baileys';
 import { MessageHandler, InteractionContext } from './bot/messageHandler';
 import { DatabaseClient } from './database/client';
@@ -15,6 +17,26 @@ import { TranscriptionService } from './services/TranscriptionService';
 import { installConsoleFilter } from '@leifermendez/baileys/lib/Utils/console-filter';
 
 const main = async () => {
+    // --- Session Persistence Setup (Render Workaround) ---
+    // This block handles session persistence on platforms like Render
+    // where the filesystem is not persistent across deploys.
+    if (process.env.WHATSAPP_SESSION) {
+        const sessionDir = path.join(process.cwd(), 'bot_sessions');
+        const sessionFile = path.join(sessionDir, 'creds.json');
+
+        try {
+            if (!fs.existsSync(sessionDir)) {
+                fs.mkdirSync(sessionDir, { recursive: true });
+                console.log(`[Session] Created directory: ${sessionDir}`);
+            }
+
+            fs.writeFileSync(sessionFile, process.env.WHATSAPP_SESSION);
+            console.log('[Session] Successfully wrote session data from environment variable.');
+        } catch (err) {
+            console.error('[Session] CRITICAL: Failed to write session file from environment variable.', err);
+        }
+    }
+
     // --- Filtro de Consola ---
     // Instala un filtro para ocultar los mensajes de sesión de Baileys que son muy "ruidosos".
     installConsoleFilter();
@@ -61,7 +83,7 @@ const main = async () => {
                     // Usamos la función de Baileys para descargar y desencriptar el audio.
                     // Esto es crucial porque los audios de WhatsApp vienen encriptados.
                     const buffer = await downloadMediaMessage(
-                        ctx.message as WAMessage, // El objeto de mensaje completo de Baileys
+                        ctx as unknown as WAMessage, // Forzamos la conversión de tipos para que sea compatible con Baileys
                         'buffer',
                         {},
                         {
