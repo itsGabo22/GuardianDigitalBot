@@ -90,6 +90,27 @@ const main = async () => {
 
     // El flujo principal que captura todos los mensajes
     const adapterProvider = createProvider(BaileysProvider);
+
+    // --- MANEJO DE SESIÓN EXPLÍCITO ---
+    // Escuchamos los eventos del proveedor para facilitar la configuración inicial.
+    adapterProvider.on('require_action', (data) => {
+        console.log('-----------------------------------------');
+        console.log('🔴🔴🔴 ACCIÓN REQUERIDA 🔴🔴🔴');
+        console.log('-----------------------------------------');
+        console.log('Escanea el siguiente código QR con tu teléfono:');
+        console.log(data.instructions);
+        console.log('-----------------------------------------');
+    });
+
+    adapterProvider.on('ready', (data) => {
+        console.log('-----------------------------------------');
+        console.log('✅✅✅ SESIÓN GENERADA ✅✅✅');
+        console.log('-----------------------------------------');
+        console.log('Copia el siguiente texto y pégalo en la variable de entorno WHATSAPP_SESSION en Render:');
+        console.log(data.session);
+        console.log('-----------------------------------------');
+    });
+
     const adapterFlow = createFlow([
         // Usamos los eventos WELCOME y ACTION para capturar cualquier mensaje.
         // WELCOME es para el primer mensaje y ACTION para los siguientes.
