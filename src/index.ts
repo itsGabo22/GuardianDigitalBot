@@ -102,13 +102,30 @@ const main = async () => {
         console.log('-----------------------------------------');
     });
 
-    adapterProvider.on('ready', (data) => {
-        console.log('-----------------------------------------');
-        console.log('✅✅✅ SESIÓN GENERADA ✅✅✅');
-        console.log('-----------------------------------------');
-        console.log('Copia el siguiente texto y pégalo en la variable de entorno WHATSAPP_SESSION en Render:');
-        console.log(data.session);
-        console.log('-----------------------------------------');
+    adapterProvider.on('ready', () => {
+        const sessionFile = path.join(process.cwd(), 'bot_sessions', 'creds.json');
+        
+        // Damos un pequeño margen para asegurar que el archivo se ha escrito en disco.
+        setTimeout(() => {
+            try {
+                if (fs.existsSync(sessionFile)) {
+                    const sessionData = fs.readFileSync(sessionFile, 'utf-8');
+                    console.log('-----------------------------------------');
+                    console.log('✅✅✅ SESIÓN GENERADA ✅✅✅');
+                    console.log('-----------------------------------------');
+                    console.log('Copia TODO el siguiente texto y pégalo en la variable de entorno WHATSAPP_SESSION en Render:');
+                    console.log(sessionData);
+                    console.log('-----------------------------------------');
+                } else {
+                    console.log('-----------------------------------------');
+                    console.log('⚠️⚠️⚠️ ADVERTENCIA: No se encontró el archivo de sesión (creds.json).');
+                    console.log('El bot debería funcionar, pero necesitarás escanear el QR de nuevo en el próximo reinicio.');
+                    console.log('-----------------------------------------');
+                }
+            } catch (err) {
+                console.error('CRITICAL: Error al leer el archivo de sesión para mostrarlo en los logs.', err);
+            }
+        }, 3000); // 3 segundos de espera
     });
 
     const adapterFlow = createFlow([
