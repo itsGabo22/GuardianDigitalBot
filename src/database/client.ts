@@ -1,29 +1,32 @@
-import { Client } from 'pg';
+import { Pool } from 'pg';
 import { config } from '../config';
 
 export class DatabaseClient {
-    private client: Client;
+    private pool: Pool;
 
     constructor() {
-        this.client = new Client({
-            user: config.database.user,
-            host: config.database.host,
-            database: config.database.database,
-            password: config.database.password,
-            port: config.database.port,
+        this.pool = new Pool({
+            connectionString: config.database.url,
+            ssl: { rejectUnauthorized: false } // Necesario para conexiones remotas en Render
         });
     }
 
     async connect() {
-        await this.client.connect();
+        // El pool se conecta automáticamente, pero podemos probar la conexión.
+        try {
+            await this.pool.query('SELECT NOW()');
+        } catch (err) {
+            console.error('Database pool connection error', err);
+            throw err;
+        }
     }
 
     async disconnect() {
-        await this.client.end();
+        await this.pool.end();
     }
 
     async query(text: string, params?: any[]) {
-        const res = await this.client.query(text, params);
+        const res = await this.pool.query(text, params);
         return res;
     }
 }
