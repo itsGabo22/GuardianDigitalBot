@@ -18,7 +18,8 @@ import { installConsoleFilter } from '@leifermendez/baileys/lib/Utils/console-fi
 
 const main = async () => {
     // --- PASO DE DEPURACIÓN PARA RENDER ---
-    console.log(`[DEBUG] WHATSAPP_SESSION variable content on start: "${process.env.WHATSAPP_SESSION ? 'Exists' : 'MISSING'}"`);
+    // Esta línea nos dirá si la variable de entorno está llegando al bot.
+    console.log(`[DEBUG] WHATSAPP_SESSION variable on start: "${process.env.WHATSAPP_SESSION ? 'Exists and has content' : 'MISSING or EMPTY'}"`);
 
     // --- Session Persistence Setup (Render Workaround) ---
     // This block handles session persistence on platforms like Render
@@ -86,7 +87,7 @@ const main = async () => {
                     // Usamos la función de Baileys para descargar y desencriptar el audio.
                     // Esto es crucial porque los audios de WhatsApp vienen encriptados.
                     const buffer = await downloadMediaMessage(
-                        ctx.message as WAMessage, // El objeto de mensaje completo de Baileys
+                        ctx as unknown as WAMessage, // Forzamos la conversión de tipos para que sea compatible con Baileys
                         'buffer',
                         {},
                         {
