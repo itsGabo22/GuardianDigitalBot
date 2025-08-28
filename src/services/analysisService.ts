@@ -5,6 +5,7 @@ import { config } from '../config';
 export interface AnalysisResult {
     isScam: boolean;
     isFakeNews: boolean;
+    isTrueNews: boolean;
     hasVirus: boolean;
     reason: string;
 }
@@ -32,6 +33,7 @@ export class AnalysisService {
             return {
                 isScam: Boolean(scamAndFakeNewsResult.isScam),
                 isFakeNews: Boolean(scamAndFakeNewsResult.isFakeNews),
+                isTrueNews: Boolean(scamAndFakeNewsResult.isTrueNews),
                 hasVirus: Boolean(virusResult),
                 reason: scamAndFakeNewsResult.reason,
             };
@@ -40,6 +42,7 @@ export class AnalysisService {
                 return {
                     isScam: false,
                     isFakeNews: false,
+                    isTrueNews: false,
                     hasVirus: false,
                     reason: "⚠️ El análisis automático está temporalmente deshabilitado. Respuesta simulada: Tu mensaje parece seguro."
                 };
@@ -47,6 +50,7 @@ export class AnalysisService {
             return {
                 isScam: false,
                 isFakeNews: false,
+                isTrueNews: false,
                 hasVirus: false,
                 reason: "No se pudo analizar el texto por un error inesperado."
             };
@@ -85,7 +89,7 @@ export class AnalysisService {
         }
     }
 
-    private async checkForScamsAndFakeNews(message: string): Promise<{ isScam: boolean; isFakeNews: boolean; reason: string }> {
+    private async checkForScamsAndFakeNews(message: string): Promise<{ isScam: boolean; isFakeNews: boolean; isTrueNews: boolean; reason: string }> {
         try {
             const factCheckContext = await this.getFactCheckInfo(message);
 
@@ -102,20 +106,20 @@ export class AnalysisService {
                 - Poor grammar and spelling.
 
                 If you identify a clear scam, your JSON output MUST be:
-                \`{"isScam": true, "isFakeNews": false, "reason": "Explain here in Spanish why it is a scam."}\`
+                \`{"isScam": true, "isFakeNews": false, "isTrueNews": false, "reason": "Explain here in Spanish why it is a scam."}\`
                 DO NOT proceed to Step 2.
 
                 **Step 2: Fake News Analysis (Only if NOT a scam)**
                 If and ONLY IF the message is NOT a scam, analyze it as a potential news item. Use the "Search Results" provided to determine its veracity.
                 - If search results CONTRADICT the message, it is FAKE NEWS.
-                - If search results CONFIRM the message, it is TRUE.
+                - If search results CONFIRM the message, it is TRUE NEWS.
                 - If search results are inconclusive or absent, it is NOT VERIFIABLE.
 
                 Based on this, generate the JSON output in Spanish:
-                - For FAKE NEWS: \`{"isScam": false, "isFakeNews": true, "reason": "Explain why it's false based on the search results."}\`
-                - For TRUE news: \`{"isScam": false, "isFakeNews": false, "reason": "Explain that the information is confirmed by search results."}\`
-                - For NOT VERIFIABLE news: \`{"isScam": false, "isFakeNews": false, "reason": "Explain that the information could not be verified with the provided search results."}\`
-                - For a simple message (like "hello"): \`{"isScam": false, "isFakeNews": false, "reason": "The message appears to be a safe, personal communication."}\`
+                - For FAKE NEWS: \`{"isScam": false, "isFakeNews": true, "isTrueNews": false, "reason": "Explain why it's false based on the search results."}\`
+                - For TRUE NEWS: \`{"isScam": false, "isFakeNews": false, "isTrueNews": true, "reason": "Explain that the information is confirmed by search results."}\`
+                - For NOT VERIFIABLE news: \`{"isScam": false, "isFakeNews": false, "isTrueNews": false, "reason": "Explain that the information could not be verified with the provided search results."}\`
+                - For a simple, safe, personal message (like "hello" or "how are you?"): \`{"isScam": false, "isFakeNews": false, "isTrueNews": false, "reason": "The message appears to be a safe, personal communication."}\`
 
                 ---
                 **User Message:**
@@ -127,7 +131,7 @@ export class AnalysisService {
                 """
                 ---
 
-                Your response MUST be ONLY the JSON object.
+                IMPORTANT: Your entire response MUST be a single, valid JSON object and nothing else. All text values within the JSON, especially the 'reason' field, MUST be in Spanish.
             `;
 
             const completion = await this.openai.chat.completions.create({
@@ -140,11 +144,12 @@ export class AnalysisService {
             return {
                 isScam: Boolean(result.isScam),
                 isFakeNews: Boolean(result.isFakeNews),
+                isTrueNews: Boolean(result.isTrueNews),
                 reason: result.reason || "Análisis completado."
             };
         } catch (error: any) {
             console.error("Error en checkForScamsAndFakeNews:", error);
-            return { isScam: false, isFakeNews: false, reason: "No se pudo analizar el texto por un error." };
+            return { isScam: false, isFakeNews: false, isTrueNews: false, reason: "No se pudo analizar el texto por un error." };
         }
     }
 

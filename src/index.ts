@@ -10,7 +10,6 @@ if (process.env.NODE_ENV !== 'production') {
     dotenv.config();
 }
 import { BaileysProvider } from '@builderbot/provider-baileys';
-import { JsonFileDB as JsonDB } from '@builderbot/database-json';
 import fs from 'fs';
 import path from 'path';
 import { downloadMediaMessage, WAMessage } from '@whiskeysockets/baileys';
@@ -183,8 +182,6 @@ const main = async () => {
         }),
     ]);
     
-    const adapterDB = new JsonDB();
-
     try {
         // Usamos nuestra nueva función con lógica de reintentos
         await connectWithRetry(databaseClient);
@@ -192,7 +189,14 @@ const main = async () => {
         const bot = await createBot({
             flow: adapterFlow,
             provider: adapterProvider,
-            database: adapterDB, // Usamos el adaptador JSON
+            // Usamos un adaptador de base de datos "dummy" que cumple con la interfaz
+            // que espera BuilderBot, pero no hace nada. Esto es porque ya manejamos
+            // la persistencia con nuestra propia clase `DatabaseClient` (PostgreSQL).
+            database: {
+                save: async () => { },
+                listHistory: async () => [],
+                getPrevByNumber: async () => null,
+            } as any,
         });
 
 
