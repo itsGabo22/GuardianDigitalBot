@@ -1,5 +1,6 @@
 import { AnalysisService, AnalysisResult } from '../services/analysisService';
 import { FeedbackService } from '../services/feedbackService';
+import { BaileysProvider } from '@builderbot/provider-baileys';
 import { IntentService } from '../services/intentService';
 import { TranscriptionService } from '../services/TranscriptionService';
 
@@ -20,14 +21,14 @@ export class MessageHandler {
     private intentService: IntentService;
     private transcriptionService: TranscriptionService;
     private userContext: Map<string, InteractionContext>;
-    private provider: any; // El proveedor de BuilderBot para enviar mensajes
+    private provider: BaileysProvider; // El proveedor de BuilderBot para enviar mensajes
 
     constructor(
         analysisService: AnalysisService, 
         feedbackService: FeedbackService, 
         intentService: IntentService,
         transcriptionService: TranscriptionService,
-        provider: any, // Recibimos el proveedor de BuilderBot
+        provider: BaileysProvider, // Recibimos el proveedor de BuilderBot
         userContext: Map<string, InteractionContext> // Recibimos el contexto compartido
     ) {
         this.analysisService = analysisService;
@@ -125,14 +126,37 @@ export class MessageHandler {
             let contentToAnalyze = messageBody;
             let originalMessage = messageBody;
 
-            // 1. Si hay un audio, transcribirlo primero.
+            // 1. Si hay un audio, transcribirlo primero con un timeout.
             if (mediaBuffer) {
-                contentToAnalyze = await this.transcriptionService.transcribeAudio(mediaBuffer);
+                console.log(`[MessageHandler] Starting audio transcription for user ${userId}. Setting a 45s timeout.`);
+                const transcriptionPromise = this.transcriptionService.transcribeAudio(mediaBuffer);
+
+                // Añadimos un timeout para evitar que el proceso se quede colgado indefinidamente.
+                const timeoutPromise = new Promise<string>((_, reject) => 
+                    setTimeout(() => reject(new Error('Transcription timed out after 45 seconds')), 45000)
+                );
+
+                try {
+                    contentToAnalyze = await Promise.race([transcriptionPromise, timeoutPromise]);
+                    console.log(`[MessageHandler] Transcription successful for user ${userId}.`);
+                } catch (transcriptionError) {
+                    // Si el error es por el timeout, lo registramos y lanzamos un error general.
+                    console.error(`[MessageHandler] Transcription failed for user ${userId}:`, transcriptionError);
+                    throw new Error('Audio processing failed or timed out.');
+                }
                 originalMessage = `[Audio]: ${contentToAnalyze}`; // Guardamos la transcripción para el contexto
             }
 
             // 2. Realizar el análisis pesado sobre el texto (original o transcrito)
+            console.log(`[MessageHandler] Starting content analysis for user ${userId}.`);
             const analysisResult = await this.analysisService.analyzeMessage(contentToAnalyze);
+            
+            // Si el análisis devuelve un error (ej. API de OpenAI caída), no continuamos.
+            if (!analysisResult.reason) {
+                throw new Error('Analysis service returned an empty result.');
+            }
+
+            console.log(`[MessageHandler] Analysis successful for user ${userId}.`);
             const { responseText, analysisSummary } = this.buildAnalysisResponse(analysisResult);
     
             // 3. Guardar el contexto para poder recibir feedback después
@@ -144,7 +168,9 @@ export class MessageHandler {
             const finalMessage = `${responseText}\n\n*¿Te fue útil este análisis? Responde 'sí' o 'no'.*`;
     
             // 4. Enviar el resultado final como un nuevo mensaje
+            console.log(`[MessageHandler] Sending final analysis to user ${userId}.`);
             await this.provider.sendText(userId, finalMessage);
+            console.log(`[MessageHandler] Final analysis sent successfully to user ${userId}.`);
         } catch (error) {
             console.error(`Error during background analysis for user ${userId}:`, error);
             await this.provider.sendText(userId, "Lo siento, ocurrió un error al analizar tu mensaje. Por favor, inténtalo de nuevo más tarde.");

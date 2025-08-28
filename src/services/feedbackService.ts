@@ -17,7 +17,7 @@ export class FeedbackService {
     public async logInteraction(userId: string, messageContent: string, analysisResult: string, wasHelpful: boolean): Promise<void> {
         // La consulta SQL ahora coincide con las columnas de la tabla 'feedback' en schema.sql
         const query = `
-            INSERT INTO feedback (user_id, message_content, analysis_result, was_helpful)
+            INSERT INTO feedback (user_id, original_message, analysis_result, was_helpful)
             VALUES ($1, $2, $3, $4)
         `;
         const values = [userId, messageContent, analysisResult, wasHelpful];
