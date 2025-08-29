@@ -1,6 +1,6 @@
 import { AnalysisService, AnalysisResult } from '../services/analysisService';
 import { FeedbackService } from '../services/feedbackService';
-import { config } from '../config'; // Importamos la configuración
+import { config } from '../config'; // Import de la configuración
 import { BaileysProvider } from '@builderbot/provider-baileys';
 import { IntentService } from '../services/intentService';
 import { TranscriptionService } from '../services/TranscriptionService';
@@ -8,7 +8,7 @@ import { TranscriptionService } from '../services/TranscriptionService';
 interface IncomingWhatsAppMessage {
     from: string;
     body: string;
-    mediaBuffer?: Buffer; // El buffer del audio vendrá aquí
+    mediaBuffer?: Buffer; // Buffer de audio
 }
 
 export interface InteractionContext {
@@ -22,7 +22,7 @@ export class MessageHandler {
     private intentService: IntentService;
     private transcriptionService: TranscriptionService;
     private userContext: Map<string, InteractionContext>;
-    private provider: BaileysProvider; // El proveedor de BuilderBot para enviar mensajes
+    private provider: BaileysProvider; // Proveedor de BuilderBot para enviar mensajes
     private intentHandlers: Record<string, (userId: string, messageBody: string) => Promise<void>>;
 
     constructor(
